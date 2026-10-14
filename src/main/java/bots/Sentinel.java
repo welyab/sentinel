@@ -22,7 +22,7 @@ import robocode.ScannedRobotEvent;
 
 /**
  * Pursues three goals each turn: keep enemies identified, fire on the closest one, and strafe.
- * Identified enemies are marked with squares that follow their movement.
+ * Identified enemies are marked with squares that follow their movement and heading.
  */
 public class Sentinel extends AdvancedRobot {
 

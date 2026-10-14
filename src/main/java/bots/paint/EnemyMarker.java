@@ -6,7 +6,7 @@ import java.awt.Graphics2D;
 import bots.enemy.TrackedEnemy;
 
 /**
- * Square bound to one identified enemy. {@link #follow(long, double, double)} keeps the square on that enemy.
+ * Square bound to one identified enemy. {@link #follow(long, double, double)} keeps the square on that enemy and turned with its heading.
  */
 public final class EnemyMarker implements Drawable {
 
@@ -27,6 +27,7 @@ public final class EnemyMarker implements Drawable {
 
     public void follow(long time, double fieldWidth, double fieldHeight) {
         square.moveTo(enemy.xAt(time, fieldWidth), enemy.yAt(time, fieldHeight));
+        square.turnTo(enemy.heading());
     }
 
     @Override

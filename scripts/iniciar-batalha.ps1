@@ -8,7 +8,10 @@
     baixa o instalador e instala em .robocode na raiz do repositorio.
     Cinco robos do pacote sample (os padrao da SDK) entram na batalha
     junto com bots.Sentinel. Interactive e Interactive_v2 ficam de fora
-    porque esperam teclado e travam a luta.
+    porque esperam teclado e travam a luta. O paint ja comeca ligado
+    pela propriedade -DPAINTING, que vale para todo robo que desenha.
+    O arco do radar tambem ja aparece: o Robocode so desenha isso
+    com robocode.options.view.scanArcs=true na configuracao da SDK.
 #>
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -145,7 +148,8 @@ if ($available.Count -lt 5) {
 }
 
 $opponents = @($available | Get-Random -Count 5)
-# O asterisco e obrigatorio: classe solta em robots/ e versao de desenvolvimento.
+# O Robocode marca com asterisco todo robo da pasta robots que nao
+# esteja no pacote sample. Sem esse sufixo, bots.Sentinel nao e encontrado.
 $selected = @('bots.Sentinel*') + $opponents
 Write-Host ("Batalha: " + ($selected -join ', '))
 
@@ -174,6 +178,33 @@ if ($javaMajor -gt 11 -and $javaMajor -lt 24) {
     }
 }
 
+# O arco do radar e uma opcao da interface, nao da batalha.
+# Fica em config/robocode.properties, lido a partir da pasta da SDK.
+$configDir = Join-Path $sdk 'config'
+New-Item -ItemType Directory -Force -Path $configDir | Out-Null
+$configFile = Join-Path $configDir 'robocode.properties'
+$scanArcs = 'robocode.options.view.scanArcs=true'
+$latin1 = [System.Text.Encoding]::GetEncoding('iso-8859-1')
+if (Test-Path -LiteralPath $configFile) {
+    $configText = [System.IO.File]::ReadAllText($configFile, $latin1)
+    if ($configText -match '(?m)^robocode\.options\.view\.scanArcs\s*=') {
+        $configText = [regex]::Replace(
+            $configText,
+            '(?m)^robocode\.options\.view\.scanArcs\s*=.*$',
+            $scanArcs)
+    }
+    else {
+        if ($configText.Length -gt 0 -and -not $configText.EndsWith("`n")) {
+            $configText += "`r`n"
+        }
+        $configText += "$scanArcs`r`n"
+    }
+}
+else {
+    $configText = "$scanArcs`r`n"
+}
+[System.IO.File]::WriteAllText($configFile, $configText, $latin1)
+
 Write-Host 'Abrindo a batalha...'
 Push-Location $sdk
 try {
@@ -181,6 +212,7 @@ try {
         '-cp' 'libs/*' `
         '-Xmx512M' `
         '-XX:+IgnoreUnrecognizedVMOptions' `
+        '-DPAINTING=true' `
         '--add-opens=java.base/sun.net.www.protocol.jar=ALL-UNNAMED' `
         '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED' `
         '--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED' `
